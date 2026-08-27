@@ -15,6 +15,7 @@ import {
 import { ArtifactsProvider, BuildTasksProvider, pickBitbakeLog } from './artifacts';
 import { openSerialMonitor, showFlashHelp } from './serial';
 import { runFlash } from './flash';
+import { adbCmd, adbShell, adbTerm, rebootDevice, atSend, screenshot, flashStorage } from './device';
 import { ChatPanel } from './chat/ChatPanel';
 import { ControlPanel } from './panel/ControlPanel';
 
@@ -69,6 +70,20 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('quecpi.flash', () =>
       guard(runWithStatus(statusBar, () => runFlash(channel)))
     ),
+    // ── 设备调试命令（host-side adb） ──
+    vscode.commands.registerCommand('quecpi.adbCmd', (args?: string) =>
+      adbCmd(channel, args || 'devices')
+    ),
+    vscode.commands.registerCommand('quecpi.adbShell', () => adbShell()),
+    vscode.commands.registerCommand('quecpi.adbTerm', (args?: string) =>
+      adbTerm(args || 'shell')
+    ),
+    vscode.commands.registerCommand('quecpi.reboot', () => rebootDevice(false)),
+    vscode.commands.registerCommand('quecpi.rebootEdl', () => rebootDevice(true)),
+    vscode.commands.registerCommand('quecpi.atSend', (args?: string) => atSend(channel, args)),
+    vscode.commands.registerCommand('quecpi.screenshot', () => screenshot(channel)),
+    vscode.commands.registerCommand('quecpi.flashUfs', () => flashStorage(channel, 'ufs')),
+    vscode.commands.registerCommand('quecpi.flashEmmc', () => flashStorage(channel, 'emmc')),
     vscode.commands.registerCommand('quecpi.chat', () => ChatPanel.create(context.extensionUri)),
     statusBar
   );

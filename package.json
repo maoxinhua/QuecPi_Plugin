@@ -73,6 +73,51 @@
         "category": "QuecPi"
       },
       {
+        "command": "quecpi.adbCmd",
+        "title": "QuecPi: ADB 命令",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.adbShell",
+        "title": "QuecPi: ADB Shell",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.adbTerm",
+        "title": "QuecPi: ADB 终端",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.reboot",
+        "title": "QuecPi: 重启设备",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.rebootEdl",
+        "title": "QuecPi: 进 EDL 模式",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.atSend",
+        "title": "QuecPi: AT 指令发送",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.screenshot",
+        "title": "QuecPi: 截图",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.flashUfs",
+        "title": "QuecPi: 一键烧录 UFS",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.flashEmmc",
+        "title": "QuecPi: 一键烧录 eMMC",
+        "category": "QuecPi"
+      },
+      {
         "command": "quecpi.serialMonitor",
         "title": "QuecPi: Serial Monitor",
         "category": "QuecPi"

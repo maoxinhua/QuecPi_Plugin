@@ -4,9 +4,7 @@ const vscode = acquireVsCodeApi();
 
 // section collapse/expand
 document.querySelectorAll('.sec-head').forEach((head) => {
-  head.addEventListener('click', () => {
-    head.parentElement.classList.toggle('collapsed');
-  });
+  head.addEventListener('click', () => head.parentElement.classList.toggle('collapsed'));
 });
 
 // status refresh
@@ -14,12 +12,26 @@ document.getElementById('refresh').addEventListener('click', () => {
   vscode.postMessage({ type: 'refreshStatus' });
 });
 
-// run buttons + card clicks
+// ── 可展开卡片组（accordion）：点头部展开/折叠 ──
+document.querySelectorAll('.cg-head').forEach((head) => {
+  head.addEventListener('click', () => {
+    head.parentElement.classList.toggle('open');
+  });
+});
+
+// ── 子卡片点击：带可选参数 ──
+document.querySelectorAll('.sc[data-cmd]').forEach((sc) => {
+  sc.addEventListener('click', () => {
+    const cmd = sc.getAttribute('data-cmd');
+    const args = sc.getAttribute('data-args');
+    vscode.postMessage({ type: 'run', command: cmd, ...(args ? { args } : {}) });
+  });
+});
+
+// ── 普通卡片点击 ──
 document.querySelectorAll('.card[data-cmd]').forEach((card) => {
   card.addEventListener('click', (e) => {
-    if (e.target.classList.contains('run') || e.target.tagName === 'BUTTON') {
-      e.stopPropagation();
-    }
+    if (e.target.classList.contains('run') || e.target.tagName === 'BUTTON') e.stopPropagation();
     const cmd = card.getAttribute('data-cmd');
     if (cmd) vscode.postMessage({ type: 'run', command: cmd });
   });
