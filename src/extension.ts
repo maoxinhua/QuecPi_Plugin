@@ -1,0 +1,136 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { Cfg } from './config';
+import {
+  runBspShell,
+  buildconfigSnippet,
+  buildallSnippet,
+  buildkernelSnippet,
+  builddtbSnippet,
+  buildpackageSnippet,
+  rebakeSnippet,
+  cleanBuildSnippet,
+  BuildStatusBar,
+} from './build';
+import { ArtifactsProvider, BuildTasksProvider, pickBitbakeLog } from './artifacts';
+import { openSerialMonitor, showFlashHelp } from './serial';
+import { runFlash } from './flash';
+import { ChatPanel } from './chat/ChatPanel';
+import { ControlPanel } from './panel/ControlPanel';
+
+export function activate(context: vscode.ExtensionContext) {
+  const channel = vscode.window.createOutputChannel('QuecPi Build');
+  const statusBar = new BuildStatusBar();
+  const artifacts = new ArtifactsProvider();
+  const tasks = new BuildTasksProvider();
+
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('quecpiArtifacts', artifacts),
+    vscode.window.registerTreeDataProvider('quecpiBuildTasks', tasks),
+    vscode.commands.registerCommand('quecpi.panel', () => ControlPanel.create(context.extensionUri)),
+    vscode.commands.registerCommand('quecpi.openArtifact', (fp: string) => openArtifact(fp)),
+    vscode.commands.registerCommand('quecpi.buildconfig', () =>
+      guard(runWithStatus(statusBar, () => runBspShell(buildconfigSnippet(), channel, { title: 'buildconfig' })))
+    ),
+    vscode.commands.registerCommand('quecpi.buildall', () =>
+      guard(runWithStatus(statusBar, async () => {
+        const r = await runBspShell(buildallSnippet(), channel, { title: 'buildall' });
+        artifacts.refresh();
+        return r;
+      }))
+    ),
+    vscode.commands.registerCommand('quecpi.buildClean', () => guard(cleanBuild(statusBar, channel))),
+    vscode.commands.registerCommand('quecpi.buildkernel', () =>
+      guard(runWithStatus(statusBar, () => runBspShell(buildkernelSnippet(), channel, { title: 'buildkernel' })))
+    ),
+    vscode.commands.registerCommand('quecpi.builddtb', () =>
+      guard(runWithStatus(statusBar, () => runBspShell(builddtbSnippet(), channel, { title: 'builddtb' })))
+    ),
+    vscode.commands.registerCommand('quecpi.buildpackage', () =>
+      guard(runWithStatus(statusBar, () => runBspShell(buildpackageSnippet(), channel, { title: 'buildpackage' })))
+    ),
+    vscode.commands.registerCommand('quecpi.rebake', async () => {
+      const recipe = await vscode.window.showInputBox({ prompt: 'Recipe to rebake (e.g. virtual/kernel, linux-qcom-custom)', placeHolder: 'virtual/kernel' });
+      if (!recipe) return;
+      await guard(runWithStatus(statusBar, () => runBspShell(rebakeSnippet(recipe), channel, { title: `rebake ${recipe}` })));
+    }),
+    vscode.commands.registerCommand('quecpi.openBuildDir', () => {
+      const dir = Cfg.deployDir();
+      vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(dir)).then(undefined, () => {
+        vscode.window.showInformationMessage(`Deploy dir: ${dir}`);
+      });
+    }),
+    vscode.commands.registerCommand('quecpi.openBitbakeLog', async () => {
+      const log = await pickBitbakeLog();
+      if (log) await vscode.window.showTextDocument(vscode.Uri.file(log));
+    }),
+    vscode.commands.registerCommand('quecpi.serialMonitor', openSerialMonitor),
+    vscode.commands.registerCommand('quecpi.flashHelp', showFlashHelp),
+    vscode.commands.registerCommand('quecpi.flash', () =>
+      guard(runWithStatus(statusBar, () => runFlash(channel)))
+    ),
+    vscode.commands.registerCommand('quecpi.chat', () => ChatPanel.create(context.extensionUri)),
+    statusBar
+  );
+}
+
+/** Early-return wrapper so a failing BSP path shows a message instead of an unhandled error. */
+function guard(p: Promise<any>): Promise<any> {
+  return p.catch((err) => {
+    vscode.window.showErrorMessage(`QuecPi: ${err?.message ?? err}`);
+    return undefined;
+  });
+}
+
+async function runWithStatus(statusBar: BuildStatusBar, fn: () => Promise<any>) {
+  statusBar.setRunning();
+  try {
+    return await fn();
+  } finally {
+    statusBar.setIdle();
+  }
+}
+
+/** Clean Build: pick scope, confirm (destructive), then wipe + full rebuild. */
+async function cleanBuild(statusBar: BuildStatusBar, channel: vscode.OutputChannel) {
+  const scope = await vscode.window.showQuickPick(
+    [
+      {
+        label: '$(trash) 删编译中间物 (tmp) — 保留 sstate 缓存',
+        description: '删除 tmp 后重建，复用 sstate 缓存（较快）',
+        value: false,
+      },
+      {
+        label: '$(trash) 完全从头 (tmp + sstate) — 全部重编',
+        description: '最彻底，全部从源码重编（约 20+ 小时）',
+        value: true,
+      },
+    ],
+    { placeHolder: '选择 Clean Build 的清理范围（破坏性，不可撤销）' }
+  );
+  if (!scope) return;
+
+  const what = scope.value ? 'tmp + sstate-cache' : 'tmp（编译中间物）';
+  const confirm = await vscode.window.showWarningMessage(
+    `确认删除 ${what} 并从头完整构建 qcom-multimedia-image？\n\n(downloads/ 源码缓存会被保留，不会重新下载)`,
+    { modal: true },
+    '确认清理并重建'
+  );
+  if (confirm !== '确认清理并重建') return;
+
+  await runWithStatus(statusBar, () =>
+    runBspShell(cleanBuildSnippet(scope.value), channel, { title: 'clean build' })
+  );
+}
+
+async function openArtifact(fp: string) {
+  if (path.extname(fp).toLowerCase() === '.vfat' || /\.(img|bin|dtb|cpio\.gz|elf)$/i.test(fp)) {
+    const choice = await vscode.window.showQuickPick(['Reveal in Explorer', 'Copy path'], { placeHolder: path.basename(fp) });
+    if (choice === 'Reveal in Explorer') await vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(fp));
+    else if (choice === 'Copy path') await vscode.env.clipboard.writeText(fp);
+    return;
+  }
+  await vscode.window.showTextDocument(vscode.Uri.file(fp));
+}
+
+export function deactivate() {}
