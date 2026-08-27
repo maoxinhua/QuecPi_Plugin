@@ -1,51 +1,47 @@
 /* eslint-disable */
-// QuecPi Control Panel webview script
+// QuecPi Control Panel webview script (compact tile layout)
 const vscode = acquireVsCodeApi();
 
-// section collapse/expand
-document.querySelectorAll('.sec-head').forEach((head) => {
-  head.addEventListener('click', () => head.parentElement.classList.toggle('collapsed'));
+// section collapse
+document.querySelectorAll('.sec-h').forEach((h) => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
 });
 
-// status refresh
-document.getElementById('refresh').addEventListener('click', () => {
-  vscode.postMessage({ type: 'refreshStatus' });
+// refresh + popout
+document.getElementById('refresh').addEventListener('click', () => vscode.postMessage({ type: 'refreshStatus' }));
+document.getElementById('popout').addEventListener('click', () => vscode.postMessage({ type: 'popout' }));
+
+// card-group accordion
+document.querySelectorAll('.cg-h').forEach((h) => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
 });
 
-// ── 可展开卡片组（accordion）：点头部展开/折叠 ──
-document.querySelectorAll('.cg-head').forEach((head) => {
-  head.addEventListener('click', () => {
-    head.parentElement.classList.toggle('open');
-  });
-});
-
-// ── 子卡片点击：带可选参数 ──
-document.querySelectorAll('.sc[data-cmd]').forEach((sc) => {
-  sc.addEventListener('click', () => {
-    const cmd = sc.getAttribute('data-cmd');
-    const args = sc.getAttribute('data-args');
+// sub-card click (with optional args)
+document.querySelectorAll('.sub[data-cmd]').forEach((s) => {
+  s.addEventListener('click', () => {
+    const cmd = s.getAttribute('data-cmd');
+    const args = s.getAttribute('data-args');
     vscode.postMessage({ type: 'run', command: cmd, ...(args ? { args } : {}) });
   });
 });
 
-// ── 普通卡片点击 ──
-document.querySelectorAll('.card[data-cmd]').forEach((card) => {
-  card.addEventListener('click', (e) => {
-    if (e.target.classList.contains('run') || e.target.tagName === 'BUTTON') e.stopPropagation();
-    const cmd = card.getAttribute('data-cmd');
+// tile click
+document.querySelectorAll('.tile[data-cmd]').forEach((t) => {
+  t.addEventListener('click', () => {
+    const cmd = t.getAttribute('data-cmd');
     if (cmd) vscode.postMessage({ type: 'run', command: cmd });
   });
 });
-document.querySelectorAll('.card[data-openchat]').forEach((card) => {
-  card.addEventListener('click', () => vscode.postMessage({ type: 'openChat' }));
+document.querySelectorAll('.tile[data-openchat]').forEach((t) => {
+  t.addEventListener('click', () => vscode.postMessage({ type: 'openChat' }));
 });
 
-// status updates from extension
+// status updates
 window.addEventListener('message', (e) => {
   const m = e.data;
   if (m.type !== 'status') return;
   const p = m.payload || {};
-  if (p.container) document.getElementById('st-container').textContent = '容器: ' + p.container;
-  if (p.artifacts) document.getElementById('st-artifacts').textContent = '产物: ' + p.artifacts;
-  if (p.lastBuild) document.getElementById('st-last').textContent = '最近构建: ' + p.lastBuild;
+  if (p.container) document.getElementById('st-container').textContent = p.container;
+  if (p.artifacts) document.getElementById('st-artifacts').textContent = p.artifacts;
+  if (p.lastBuild) document.getElementById('st-last').textContent = p.lastBuild;
 });

@@ -29,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('quecpiArtifacts', artifacts),
     vscode.window.registerTreeDataProvider('quecpiBuildTasks', tasks),
     vscode.commands.registerCommand('quecpi.panel', () => ControlPanel.create(context.extensionUri)),
+    vscode.commands.registerCommand('quecpi.panelPopout', () => ControlPanel.popout(context.extensionUri)),
     vscode.commands.registerCommand('quecpi.openArtifact', (fp: string) => openArtifact(fp)),
     vscode.commands.registerCommand('quecpi.buildconfig', () =>
       guard(runWithStatus(statusBar, () => runBspShell(buildconfigSnippet(), channel, { title: 'buildconfig' })))

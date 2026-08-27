@@ -19,7 +19,12 @@
     "commands": [
       {
         "command": "quecpi.panel",
-        "title": "QuecPi: 打开控制面板",
+        "title": "QuecPi: Open Panel",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.panelPopout",
+        "title": "QuecPi: Pop Out Panel",
         "category": "QuecPi"
       },
       {
