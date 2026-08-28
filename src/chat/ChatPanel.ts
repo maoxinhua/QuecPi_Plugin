@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Cfg } from '../config';
+import { t, isChinese } from '../i18n';
 import { streamChat, ChatMessage } from './api';
 import { listAgentPresets, readAgentPreset, systemPromptForPreset, HarnessPreset } from './harness';
 import { listSessions, promptSession, sessionHistory, openMux, HarnessSession } from './harnessSession';
@@ -7,7 +8,7 @@ import { listSessions, promptSession, sessionHistory, openMux, HarnessSession } 
 /**
  * CodeBuddy-style chat panel.
  * The "Agent" dropdown is the RUNNING DeepSeek Harness's real agent presets
- * (标准模式 / PTC 模式 / 极简模式 / 创造模式 / user presets), fetched from
+ * (Standard / PTC / Minimal / Creator / user presets), fetched from
  * http://127.0.0.1:3080/api/agentPreset.*. Selecting one applies its persona
  * (system prompt) to this chat. Falls back to built-in modes when offline.
  */
@@ -64,7 +65,7 @@ export class ChatPanel {
       }
     } catch (e: any) {
       this.harnessPresets = null;
-      this.post('status', `⚠ harness 未连接（${Cfg.harnessUrl()}）——Agent 下拉使用内置模式。${e?.message ?? ''}`);
+      this.post('status', `⚠ harness unreachable (${Cfg.harnessUrl()}) - Agent dropdown uses built-in presets. ${e?.message ?? ''}`);
     }
 
     try {
@@ -79,7 +80,7 @@ export class ChatPanel {
       }
     } catch (e: any) {
       this.connectMode = 'model';
-      this.post('status', `⚠ 无法连接 harness 会话：${e?.message ?? e}（已回退为直接模型模式）`);
+      this.post('status', `⚠ cannot connect harness session: ${e?.message ?? e} (fell back to Direct Model)`);
     }
 
     this.postInit();
@@ -87,15 +88,29 @@ export class ChatPanel {
   }
 
   private postInit() {
+    const zh = isChinese();
+    const localizePreset = (id: string, name?: string): string => {
+      const map: Record<string, [string, string]> = {
+        standard: ['Standard', '标准模式'],
+        code: ['PTC', 'PTC 模式'],
+        minimal: ['Minimal', '极简模式'],
+        cordis: ['Creator', '创造模式'],
+        quectel: ['Quectel Engineer', 'Quectel Engineer'],
+      };
+      const hit = map[id];
+      if (hit) return zh ? hit[1] : hit[0];
+      return name ?? id;
+    };
     const presets = this.harnessPresets
       ? this.harnessPresets.map((p) => ({
           id: p.id,
-          label: p.name ?? p.id,
+          label: localizePreset(p.id, p.name),
           isDefault: p.isDefault,
           broken: p.broken,
         }))
-      : Cfg.chatPresets().map((p) => ({ id: p.id, label: p.label, isDefault: p.id === this.presetId }));
+      : Cfg.chatPresets().map((p) => ({ id: p.id, label: localizePreset(p.id, p.label), isDefault: p.id === this.presetId }));
     const payload = {
+      lang: isChinese() ? 'zh' : 'en',
       presets,
       currentPreset: this.presetId,
       models: Cfg.chatModels(),
@@ -122,8 +137,8 @@ export class ChatPanel {
   private postConfigStatus() {
     const hasKey = !!Cfg.chatApiKey();
     const status = hasKey
-      ? `模型: ${this.model} · 端点: ${Cfg.chatBaseUrl()}`
-      : '⚠ 未配置 API Key —— 设置(Ctrl+,)搜 “quecpi.chat.apiKey” 填入，或设环境变量 QUECPI_API_KEY 后重启 VS Code。';
+      ? `${t('chat.model')}: ${this.model} · endpoint: ${Cfg.chatBaseUrl()}`
+      : t('chat.noKey');
     this.post('status', status);
   }
 
@@ -188,21 +203,21 @@ export class ChatPanel {
         const detail = await readAgentPreset(Cfg.harnessUrl(), this.presetId);
         this.systemPrompt = systemPromptForPreset(detail, this.model, cwd);
         const label = this.harnessPresets.find((p) => p.id === this.presetId)?.name ?? this.presetId;
-        this.post('status', `Agent: ${label}（harness 预设，已应用其 persona）· 模型: ${this.model}`);
+        this.post('status', `Agent: ${label} · ${t('chat.model')}: ${this.model}`);
         return;
       } catch (e: any) {
-        this.post('status', `⚠ 读取 harness 预设 ${this.presetId} 失败：${e?.message ?? e}（改用内置模式）`);
+        this.post('status', `⚠ read harness preset ${this.presetId} failed: ${e?.message ?? e} (using built-in)`);
       }
     }
     this.systemPrompt = Cfg.promptForPreset(this.presetId);
     const label = Cfg.chatPresets().find((p) => p.id === this.presetId)?.label ?? this.presetId;
-    this.post('status', `Agent: ${label}（内置模式）· 模型: ${this.model}`);
+    this.post('status', `Agent: ${label} · ${t('chat.model')}: ${this.model}`);
   }
 
   private grabContext(mode: 'selection' | 'file') {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      this.post('toast', '请先打开一个文件（并把光标/选区放到要附加的位置）。');
+      this.post('toast', t('chat.grabFile'));
       return;
     }
     const doc = editor.document;
@@ -221,7 +236,7 @@ export class ChatPanel {
 
     const content =
       `\n[File: ${rel}]\n` +
-      (snippet ? `\`\`\`\n${snippet}\n\`\`\`\n` : `(整个文件，${doc.lineCount} 行 — 回复“读这个文件”可让模型读取)`);
+      (snippet ? `\`\`\`\n${snippet}\n\`\`\`\n` : `(${doc.lineCount} lines)`);
 
     this.post('appendContext', { label, content });
   }
@@ -230,7 +245,7 @@ export class ChatPanel {
     if (!userText.trim() && contexts.length === 0) return;
     let userContent = userText;
     if (contexts.length > 0) {
-      userContent += '\n\n--- 附加上下文 ---\n' + contexts.join('\n\n');
+      userContent += '\n\n--- attached context ---\n' + contexts.join('\n\n');
     }
     this.history.push({ role: 'user', content: userContent });
     this.post('history', this.history.filter((m) => m.role !== 'system'));
@@ -264,7 +279,7 @@ export class ChatPanel {
     try {
       await promptSession(Cfg.harnessUrl(), this.activeSessionId, text);
     } catch (e: any) {
-      this.post('assistantError', `session.prompt 失败: ${e?.message ?? e}`);
+      this.post('assistantError', `session.prompt failed: ${e?.message ?? e}`);
     }
   }
 
@@ -354,29 +369,29 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--vscode-font
 <body>
 <div id="status"></div>
 <div id="toolbar">
-  <label>连接</label>
+  <label>${t('chat.connect')}</label>
   <select id="connectmode">
-    <option value="harness">Harness（我）</option>
-    <option value="model">直接模型</option>
+    <option value="harness">${t('chat.harness')}</option>
+    <option value="model">${t('chat.direct')}</option>
   </select>
-  <label>会话</label>
+  <label>${t('chat.session')}</label>
   <select id="session"></select>
   <label>Agent</label>
   <select id="preset"></select>
-  <label>模型</label>
+  <label>${t('chat.model')}</label>
   <select id="model"></select>
 </div>
-<div id="msgs"><div class="hint">QuecPi AI Chat — 连接选「Harness（我）」时，消息直达运行中的 DeepSeek Harness 会话（带我的上下文/工具/状态）；选「直接模型」则走本地 LLM 端点。点 “+ Selection / + Current File” 附加代码上下文。</div></div>
+<div id="msgs"><div class="hint">${t('chat.hint')}</div></div>
 <div id="ctxchips"></div>
 <div id="ctxbar">
-  <button id="ctxSel">+ Selection</button>
-  <button id="ctxFile">+ Current File</button>
-  <button id="clear" style="margin-left:auto">Clear</button>
+  <button id="ctxSel">${t('chat.sel')}</button>
+  <button id="ctxFile">${t('chat.file')}</button>
+  <button id="clear" style="margin-left:auto">${t('chat.clear')}</button>
 </div>
 <div id="inputrow">
-  <textarea id="input" placeholder="Ask about the QuecPi H1 BSP (e.g. 怎么单独编译内核？)"></textarea>
-  <button id="send">Send</button>
-  <button id="stop">Stop</button>
+  <textarea id="input" placeholder="${t('chat.input.ph')}"></textarea>
+  <button id="send">${t('chat.send')}</button>
+  <button id="stop">${t('chat.stop')}</button>
 </div>
 <script src="${jsUri}"></script>
 </body>

@@ -50,7 +50,7 @@ function populateSelects(p) {
   for (const pr of p.presets) {
     const o = document.createElement('option');
     o.value = pr.id;
-    o.textContent = pr.label + (pr.isDefault ? '（默认）' : '') + (pr.broken ? ' ⚠' : '');
+    o.textContent = pr.label + (pr.isDefault ? (presetSel.dataset.lang === 'zh' ? '（默认）' : ' (default)') : '') + (pr.broken ? ' ⚠' : '');
     if (pr.broken) o.disabled = true;
     presetSel.appendChild(o);
   }
@@ -107,6 +107,9 @@ window.addEventListener('message', (e) => {
   const m = e.data;
   switch (m.type) {
     case 'init': {
+      document.documentElement.dataset.lang = m.payload.lang || 'en';
+      msgs.dataset.lang = m.payload.lang || 'en';
+      presetSel.dataset.lang = m.payload.lang || 'en';
       populateSelects(m.payload);
       break;
     }
@@ -115,7 +118,7 @@ window.addEventListener('message', (e) => {
       for (const msg of m.payload) {
         addMsg(
           msg.role === 'user' ? 'user' : 'assistant',
-          '<span class="role-tag">' + (msg.role === 'user' ? '你' : 'QuecPi') + '</span>' + md(msg.content)
+          '<span class="role-tag">' + (msg.role === 'user' ? (msgs.dataset.lang === 'zh' ? '你' : 'You') : 'QuecPi') + '</span>' + md(msg.content)
         );
       }
       break;
