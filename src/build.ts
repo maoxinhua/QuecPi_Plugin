@@ -16,7 +16,7 @@ export interface BuildResult {
 export async function runBspShell(
   bashSnippet: string,
   channel: vscode.OutputChannel,
-  opts: { title?: string; cwd?: string } = {}
+  opts: { title?: string; cwd?: string; token?: vscode.CancellationToken } = {}
 ): Promise<BuildResult> {
   const start = Date.now();
   const bsp = Cfg.bspPath();
@@ -41,6 +41,11 @@ export async function runBspShell(
 
   return new Promise<BuildResult>((resolve) => {
     const proc = spawn(cmd, args, { cwd: opts.cwd ?? bsp });
+    // cancellation support (Uniknect-style withProgress + token)
+    const cancelSub = opts.token?.onCancellationRequested(() => {
+      channel.appendLine('\n[quecpi] cancelled by user — killing process tree...');
+      try { proc.kill('SIGKILL'); } catch { /* ignore */ }
+    });
     let output = '';
     const onData = (d: Buffer) => {
       const s = d.toString();
@@ -65,6 +70,7 @@ export async function runBspShell(
     proc.on('close', (code) => {
       const dur = (Date.now() - start) / 1000;
       channel.appendLine(`\n[quecpi] finished in ${dur.toFixed(1)}s, exit=${code}`);
+      cancelSub?.dispose();
       resolve({ ok: code === 0, exitCode: code, durationSec: dur, output });
     });
   });

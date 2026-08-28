@@ -35,6 +35,9 @@ document.querySelectorAll('.tile[data-cmd]').forEach((t) => {
 document.querySelectorAll('.tile[data-openchat]').forEach((t) => {
   t.addEventListener('click', () => vscode.postMessage({ type: 'openChat' }));
 });
+document.querySelectorAll('.tile[data-opencopilot]').forEach((t) => {
+  t.addEventListener('click', () => vscode.postMessage({ type: 'openCopilot' }));
+});
 
 // status updates
 window.addEventListener('message', (e) => {

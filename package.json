@@ -103,6 +103,11 @@
         "category": "QuecPi"
       },
       {
+        "command": "quecpi.copilot",
+        "title": "QuecPi: 打开 Copilot Chat",
+        "category": "QuecPi"
+      },
+      {
         "command": "quecpi.atSend",
         "title": "QuecPi: AT 指令发送",
         "category": "QuecPi"
@@ -144,6 +149,11 @@
           "id": "quecpi",
           "title": "QuecPi",
           "icon": "$(chip)"
+        },
+        {
+          "id": "quecpiSidebar",
+          "title": "QuecPi Panel",
+          "icon": "$(dashboard)"
         }
       ]
     },
@@ -158,6 +168,13 @@
           "id": "quecpiBuildTasks",
           "name": "Quick Build",
           "icon": "$(tools)"
+        }
+      ],
+      "quecpiSidebar": [
+        {
+          "id": "quecpiSidebarView",
+          "name": "Control Panel",
+          "type": "webview"
         }
       ]
     },

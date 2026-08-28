@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { runQuiet } from './build';
 import { Cfg } from './config';
+import { getSharedTerminal } from './terminal';
 
 /**
- * Serial monitor: opens an integrated terminal running the best available
- * serial tool on the HOST (WSL) — the board is attached to the host USB.
+ * Serial monitor: opens a shared integrated terminal running the best
+ * available serial tool on the HOST (WSL) — the board is attached to host USB.
  */
 export async function openSerialMonitor(): Promise<void> {
   const port = Cfg.serialPort();
@@ -20,7 +21,7 @@ export async function openSerialMonitor(): Promise<void> {
       'Cancel'
     );
     if (go === 'apt install picocom') {
-      const term = vscode.window.createTerminal({ name: 'apt' });
+      const term = getSharedTerminal('QuecPi Install');
       term.show();
       term.sendText('sudo apt-get install -y picocom');
     }
@@ -34,10 +35,7 @@ export async function openSerialMonitor(): Promise<void> {
   else if (base === 'screen') cmdline = `screen ${port} ${baud}`;
   else cmdline = `socat - UNIX-CONNECT:${port},raw,echo=0,b${baud}`; // approx; socat users usually do stty first
 
-  const term = vscode.window.createTerminal({
-    name: `QuecPi Serial ${port}`,
-    cwd: Cfg.bspPath() || undefined,
-  });
+  const term = getSharedTerminal('QuecPi Serial');
   term.show();
   term.sendText(cmdline);
   vscode.window.showInformationMessage(`QuecPi serial: ${cmdline}`);

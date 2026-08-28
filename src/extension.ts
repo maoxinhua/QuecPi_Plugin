@@ -18,6 +18,7 @@ import { runFlash } from './flash';
 import { adbCmd, adbShell, adbTerm, rebootDevice, atSend, screenshot, flashStorage } from './device';
 import { ChatPanel } from './chat/ChatPanel';
 import { ControlPanel } from './panel/ControlPanel';
+import { SidebarProvider } from './panel/SidebarProvider';
 
 export function activate(context: vscode.ExtensionContext) {
   const channel = vscode.window.createOutputChannel('QuecPi Build');
@@ -28,15 +29,33 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('quecpiArtifacts', artifacts),
     vscode.window.registerTreeDataProvider('quecpiBuildTasks', tasks),
+    vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, new SidebarProvider(context.extensionUri)),
     vscode.commands.registerCommand('quecpi.panel', () => ControlPanel.create(context.extensionUri)),
     vscode.commands.registerCommand('quecpi.panelPopout', () => ControlPanel.popout(context.extensionUri)),
+    vscode.commands.registerCommand('quecpi.copilot', async () => {
+      const ext = vscode.extensions.getExtension('GitHub.copilot-chat');
+      if (!ext) {
+        const go = await vscode.window.showWarningMessage('GitHub Copilot Chat is not installed. Install it?', 'Install', 'Cancel');
+        if (go === 'Install') await vscode.commands.executeCommand('workbench.extensions.installExtension', 'GitHub.copilot-chat');
+        return;
+      }
+      await vscode.commands.executeCommand('workbench.action.chat.toggle');
+    }),
     vscode.commands.registerCommand('quecpi.openArtifact', (fp: string) => openArtifact(fp)),
     vscode.commands.registerCommand('quecpi.buildconfig', () =>
       guard(runWithStatus(statusBar, () => runBspShell(buildconfigSnippet(), channel, { title: 'buildconfig' })))
     ),
     vscode.commands.registerCommand('quecpi.buildall', () =>
       guard(runWithStatus(statusBar, async () => {
-        const r = await runBspShell(buildallSnippet(), channel, { title: 'buildall' });
+        // progress notification + cancellable (Uniknect-style withProgress)
+        const r = await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: 'QuecPi Build All', cancellable: true },
+          async (progress, token) => {
+            progress.report({ message: 'bitbake qcom-multimedia-image...' });
+            const r2 = await runBspShell(buildallSnippet(), channel, { title: 'buildall', token });
+            progress.report({ message: r2.ok ? 'done' : `failed (exit ${r2.exitCode})`, increment: 100 });
+            return r2;
+          });
         artifacts.refresh();
         return r;
       }))
