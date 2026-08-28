@@ -108,56 +108,46 @@ function dispatchEvent(ev: any, cb: MuxCallbacks) {
 }
 
 /**
- * Opens the aggregated SSE mux stream once and dispatches this session's
- * events to cb. Long-lived; returns an AbortController the caller can abort.
+ * Opens the aggregated mux event stream once (WebSocket — the running harness
+ * requires WS for /api/events.mux, HTTP SSE gets 426) and dispatches this
+ * session's events to cb. Long-lived; returns an AbortController to close it.
  */
 export function openMux(baseUrl: string, sessionId: string, cb: MuxCallbacks): AbortController {
   const ac = new AbortController();
-  const url = `${baseUrl.replace(/\/+$/, '')}/api/events.mux`;
-  (async () => {
-    let resp: Response;
+  const wsUrl = `${baseUrl.replace(/\/+$/, '').replace(/^http/, 'ws')}/api/events.mux`;
+  let ws: import('ws') | undefined;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const WS = require('ws') as typeof import('ws');
+    ws = new WS(wsUrl);
+  } catch (e: any) {
+    cb.onError(`events.mux WS 连接失败: ${e?.message ?? e}`);
+    return ac;
+  }
+
+  ws.on('open', () => { /* ready — wait for frames */ });
+  ws.on('message', (data: any) => {
+    let frame: any;
     try {
-      resp = await fetch(url, { headers: { Accept: 'text/event-stream' }, signal: ac.signal });
-    } catch (e: any) {
-      if (e?.name !== 'AbortError') cb.onError(`events.mux 连接失败: ${e?.message ?? e}`);
+      frame = JSON.parse(data.toString());
+    } catch {
       return;
     }
-    if (!resp.ok || !resp.body) {
-      cb.onError(`events.mux HTTP ${resp.status}`);
-      return;
+    const p = frame?.payload;
+    if (!p) return;
+    if (frame.method === 'session/event' && p.sessionId === sessionId) {
+      dispatchEvent(p.event, cb);
+    } else if (frame.method === 'stream/error') {
+      cb.onError(p.error?.message ?? 'stream error');
     }
-    const reader = resp.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
+  });
+  ws.on('error', (e: any) => cb.onError(`events.mux WS 错误: ${e?.message ?? e}`));
+  ws.on('close', () => { /* stream ended */ });
+
+  ac.signal.addEventListener('abort', () => {
     try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop() ?? '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payloadStr = line.slice(6).trim();
-          if (!payloadStr) continue;
-          let frame: any;
-          try {
-            frame = JSON.parse(payloadStr);
-          } catch {
-            continue;
-          }
-          const p = frame?.payload;
-          if (!p) continue;
-          if (frame.method === 'session/event' && p.sessionId === sessionId) {
-            dispatchEvent(p.event, cb);
-          } else if (frame.method === 'stream/error') {
-            cb.onError(p.error?.message ?? 'stream error');
-          }
-        }
-      }
-    } catch (e: any) {
-      if (e?.name !== 'AbortError') cb.onError(`events.mux 流中断: ${e?.message ?? e}`);
-    }
-  })();
+      ws?.close();
+    } catch { /* ignore */ }
+  });
   return ac;
 }
