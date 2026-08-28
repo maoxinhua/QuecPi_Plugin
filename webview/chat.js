@@ -109,11 +109,6 @@ function toggleMode(mode) {
   // both modes: Agent + Model are active (harness mode switches the session,
   // direct mode switches the local chat); only the session picker is harness-only
   sessionSel.disabled = mode !== 'harness';
-  if (mode === 'harness' && harnessModelGroups.length === 0) {
-    // harness models not yet loaded — keep local list until they arrive
-  }
-}
-  sessionSel.disabled = mode !== 'harness';
 }
 
 function addChip(ctx) {
