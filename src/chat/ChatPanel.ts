@@ -3,7 +3,7 @@ import { Cfg } from '../config';
 import { t, isChinese } from '../i18n';
 import { streamChat, ChatMessage } from './api';
 import { listAgentPresets, readAgentPreset, systemPromptForPreset, HarnessPreset } from './harness';
-import { listSessions, promptSession, sessionHistory, openMux, HarnessSession } from './harnessSession';
+import { listSessions, promptSession, sessionHistory, openMux, listSessionModels, selectSessionModel, selectAgentPreset, HarnessSession } from './harnessSession';
 
 /**
  * CodeBuddy-style chat panel.
@@ -77,6 +77,7 @@ export class ChatPanel {
       if (this.connectMode === 'harness' && this.activeSessionId) {
         this.startMux();
         await this.loadHistory();
+        void this.loadHarnessModels();
       }
     } catch (e: any) {
       this.connectMode = 'model';
@@ -163,19 +164,30 @@ export class ChatPanel {
         break;
       case 'setPreset':
         this.presetId = msg.id;
-        vscode.workspace.getConfiguration('quecpi.chat').update('preset', msg.id, vscode.ConfigurationTarget.Global);
-        void this.resolveSystemPrompt();
+        if (this.connectMode === 'harness' && this.activeSessionId) {
+          // switch the harness session's agent preset (blank sessions only)
+          this.selectPresetForSession(msg.id);
+        } else {
+          vscode.workspace.getConfiguration('quecpi.chat').update('preset', msg.id, vscode.ConfigurationTarget.Global);
+          void this.resolveSystemPrompt();
+        }
         break;
       case 'setModel':
         this.model = msg.id;
-        vscode.workspace.getConfiguration('quecpi.chat').update('model', msg.id, vscode.ConfigurationTarget.Global);
-        void this.resolveSystemPrompt();
-        this.postConfigStatus();
+        if (this.connectMode === 'harness' && this.activeSessionId) {
+          // switch the harness session's model route
+          this.selectModelForSession(msg.provider, msg.id);
+        } else {
+          vscode.workspace.getConfiguration('quecpi.chat').update('model', msg.id, vscode.ConfigurationTarget.Global);
+          void this.resolveSystemPrompt();
+          this.postConfigStatus();
+        }
         break;
       case 'setSession':
         this.activeSessionId = msg.id;
         this.startMux();
         void this.loadHistory();
+        void this.loadHarnessModels();
         break;
       case 'setConnectMode':
         this.connectMode = msg.mode;
@@ -194,6 +206,48 @@ export class ChatPanel {
 
   private post(type: string, payload?: any) {
     this.panel.webview.postMessage({ type, payload });
+  }
+
+  /** Fetch the session's routable models and send them to the webview. */
+  private async loadHarnessModels() {
+    if (!this.activeSessionId) return;
+    try {
+      const models = await listSessionModels(Cfg.harnessUrl(), this.activeSessionId);
+      this.post('harnessModels', {
+        current: models.current,
+        groups: models.groups.map((g) => ({ id: g.id, name: g.name, models: g.models.map((m) => ({ id: m.id, name: m.name })) })),
+      });
+    } catch {
+      /* ignore — model dropdown keeps local list */
+    }
+  }
+
+  /** Switch the harness session's model via session.selectModel. */
+  private async selectModelForSession(provider: string, model: string) {
+    if (!this.activeSessionId) return;
+    try {
+      await selectSessionModel(Cfg.harnessUrl(), this.activeSessionId, provider, model);
+      this.post('status', `Session model -> ${provider}/${model}`);
+    } catch (e: any) {
+      this.post('assistantError', `switch model failed: ${e?.message ?? e}`);
+    }
+  }
+
+  /** Switch the harness session's agent preset via agentPreset.select. */
+  private async selectPresetForSession(id: string) {
+    if (!this.activeSessionId) return;
+    try {
+      await selectAgentPreset(Cfg.harnessUrl(), this.activeSessionId, id);
+      this.post('status', `Session agent preset -> ${id}`);
+    } catch (e: any) {
+      const msg = `${e?.message ?? e}`;
+      this.post(
+        'assistantError',
+        msg.includes('agent-preset-locked')
+          ? 'Agent preset can only be switched on a BLANK session (one that has not started). Create a new session to switch presets.'
+          : `switch preset failed: ${msg}`
+      );
+    }
   }
 
   private async resolveSystemPrompt() {

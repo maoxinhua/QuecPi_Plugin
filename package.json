@@ -141,6 +141,11 @@
         "command": "quecpi.chat",
         "title": "QuecPi: AI Chat (CodeBuddy)",
         "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.newPreset",
+        "title": "QuecPi: 创建 Agent 预设 (复制)",
+        "category": "QuecPi"
       }
     ],
     "viewsContainers": {

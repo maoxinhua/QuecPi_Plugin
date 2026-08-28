@@ -49,6 +49,12 @@ export async function readAgentPreset(baseUrl: string, id: string, signal?: Abor
   return rpc<HarnessPresetDetail>(baseUrl, 'agentPreset.read', { agentPreset: id }, signal);
 }
 
+/** agentPreset.copy — create a new user preset by copying an existing one. */
+export async function copyAgentPreset(baseUrl: string, from: string, agentPreset: string, name?: string): Promise<string> {
+  const v = await rpc<{ agentPreset: string }>(baseUrl, 'agentPreset.copy', { from, agentPreset, name });
+  return v.agentPreset;
+}
+
 /** Extract the `persona` row's system-prompt text from a preset composition YAML. */
 export function extractPersona(content: string): string | undefined {
   const idx = content.indexOf('- id: persona');

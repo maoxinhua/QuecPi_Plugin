@@ -45,6 +45,9 @@ function addMsg(role, html) {
 let assistantEl = null;
 let pendingContexts = []; // {label, content}
 
+let harnessModelGroups = [];
+let harnessModelCurrent = null;
+
 function populateSelects(p) {
   presetSel.innerHTML = '';
   for (const pr of p.presets) {
@@ -56,14 +59,8 @@ function populateSelects(p) {
   }
   presetSel.value = p.currentPreset;
 
-  modelSel.innerHTML = '';
-  for (const mo of p.models) {
-    const o = document.createElement('option');
-    o.value = mo;
-    o.textContent = mo;
-    modelSel.appendChild(o);
-  }
-  modelSel.value = p.currentModel;
+  // model dropdown: local list by default; replaced by harness models in harness mode
+  populateModelSelect(p.models, p.currentModel);
 
   sessionSel.innerHTML = '';
   for (const s of p.sessions || []) {
@@ -77,10 +74,45 @@ function populateSelects(p) {
   toggleMode(p.connectMode || 'harness');
 }
 
+function populateModelSelect(models, currentModel) {
+  modelSel.innerHTML = '';
+  if (connectSel && connectSel.value === 'harness' && harnessModelGroups.length > 0) {
+    // harness session models, grouped by provider (value = provider|model)
+    for (const g of harnessModelGroups) {
+      const og = document.createElement('optgroup');
+      og.label = g.name || g.id;
+      for (const m of g.models) {
+        const o = document.createElement('option');
+        o.value = m.id;
+        o.setAttribute('data-provider', g.id);
+        o.textContent = m.name || m.id;
+        og.appendChild(o);
+      }
+      modelSel.appendChild(og);
+    }
+    if (harnessModelCurrent) {
+      const sel = [...modelSel.options].find((o) => o.value === harnessModelCurrent.model && o.getAttribute('data-provider') === harnessModelCurrent.provider);
+      if (sel) modelSel.value = sel.value;
+    }
+  } else {
+    for (const mo of models || []) {
+      const o = document.createElement('option');
+      o.value = mo;
+      o.textContent = mo;
+      modelSel.appendChild(o);
+    }
+    modelSel.value = currentModel;
+  }
+}
+
 function toggleMode(mode) {
-  // in harness mode the Agent/模型 selects are irrelevant (harness drives them)
-  presetSel.disabled = mode === 'harness';
-  modelSel.disabled = mode === 'harness';
+  // both modes: Agent + Model are active (harness mode switches the session,
+  // direct mode switches the local chat); only the session picker is harness-only
+  sessionSel.disabled = mode !== 'harness';
+  if (mode === 'harness' && harnessModelGroups.length === 0) {
+    // harness models not yet loaded — keep local list until they arrive
+  }
+}
   sessionSel.disabled = mode !== 'harness';
 }
 
@@ -111,6 +143,12 @@ window.addEventListener('message', (e) => {
       msgs.dataset.lang = m.payload.lang || 'en';
       presetSel.dataset.lang = m.payload.lang || 'en';
       populateSelects(m.payload);
+      break;
+    }
+    case 'harnessModels': {
+      harnessModelGroups = m.payload.groups || [];
+      harnessModelCurrent = m.payload.current || null;
+      populateModelSelect([], null);
       break;
     }
     case 'history': {
@@ -171,7 +209,11 @@ document.getElementById('clear').onclick = () => vscode.postMessage({ type: 'cle
 sendBtn.onclick = () => send();
 stopBtn.onclick = () => vscode.postMessage({ type: 'stop' });
 presetSel.onchange = () => vscode.postMessage({ type: 'setPreset', id: presetSel.value });
-modelSel.onchange = () => vscode.postMessage({ type: 'setModel', id: modelSel.value });
+modelSel.onchange = () => {
+  const opt = modelSel.selectedOptions && modelSel.selectedOptions[0];
+  const provider = opt ? opt.getAttribute('data-provider') : undefined;
+  vscode.postMessage({ type: 'setModel', id: modelSel.value, ...(provider ? { provider } : {}) });
+};
 connectSel.onchange = () => {
   const mode = connectSel.value;
   toggleMode(mode);

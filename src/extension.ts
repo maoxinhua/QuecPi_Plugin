@@ -19,6 +19,7 @@ import { adbCmd, adbShell, adbTerm, rebootDevice, atSend, screenshot, flashStora
 import { ChatPanel } from './chat/ChatPanel';
 import { ControlPanel } from './panel/ControlPanel';
 import { SidebarProvider } from './panel/SidebarProvider';
+import { listAgentPresets, copyAgentPreset } from './chat/harness';
 
 export function activate(context: vscode.ExtensionContext) {
   const channel = vscode.window.createOutputChannel('QuecPi Build');
@@ -87,6 +88,23 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('quecpi.serialMonitor', openSerialMonitor),
     vscode.commands.registerCommand('quecpi.flashHelp', showFlashHelp),
+    vscode.commands.registerCommand('quecpi.newPreset', async () => {
+      // 更新/创建 Agent 预设：复制一个既有预设
+      try {
+        const presets = await listAgentPresets(Cfg.harnessUrl());
+        const from = await vscode.window.showQuickPick(
+          presets.map((p) => ({ label: p.name ?? p.id, detail: p.id, description: p.trust })),
+          { placeHolder: 'Copy which preset as the base?' }
+        );
+        if (!from) return;
+        const id = await vscode.window.showInputBox({ prompt: 'New preset id (directory name, [a-z0-9-])', placeHolder: 'my-preset' });
+        if (!id) return;
+        await copyAgentPreset(Cfg.harnessUrl(), from.detail, id);
+        vscode.window.showInformationMessage(`Preset "${id}" created (copied from ${from.detail}). Edit its files in ~/.dsh/.agent-presets/${id}/`);
+      } catch (e: any) {
+        vscode.window.showErrorMessage(`Create preset failed: ${e?.message ?? e}`);
+      }
+    }),
     vscode.commands.registerCommand('quecpi.flash', () =>
       guard(runWithStatus(statusBar, () => runFlash(channel)))
     ),

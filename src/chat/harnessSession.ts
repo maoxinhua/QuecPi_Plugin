@@ -48,6 +48,47 @@ export async function listSessions(baseUrl: string): Promise<HarnessSession[]> {
   return v.items;
 }
 
+export interface HarnessModelGroup {
+  id: string;
+  name: string;
+  models: { id: string; name: string }[];
+}
+export interface SessionModels {
+  current: { provider: string; model: string };
+  groups: HarnessModelGroup[];
+}
+
+/** session.models — the models a session can route to (grouped by provider). */
+export async function listSessionModels(baseUrl: string, sessionId: string): Promise<SessionModels> {
+  return rpc<SessionModels>(baseUrl, 'session.models', { sessionId });
+}
+
+/** session.selectModel — switch the session's model route. */
+export async function selectSessionModel(
+  baseUrl: string,
+  sessionId: string,
+  provider: string,
+  model: string
+): Promise<void> {
+  await rpc(baseUrl, 'session.selectModel', { sessionId, provider, model });
+}
+
+/** agentPreset.select — recompose a session's agent preset (blank sessions only). */
+export async function selectAgentPreset(baseUrl: string, sessionId: string, agentPreset: string): Promise<void> {
+  await rpc(baseUrl, 'agentPreset.select', { sessionId, agentPreset });
+}
+
+/** agentPreset.copy — create a new user preset by copying an existing one. */
+export async function copyAgentPreset(
+  baseUrl: string,
+  from: string,
+  agentPreset: string,
+  name?: string
+): Promise<string> {
+  const v = await rpc<{ agentPreset: string }>(baseUrl, 'agentPreset.copy', { from, agentPreset, name });
+  return v.agentPreset;
+}
+
 export async function promptSession(baseUrl: string, sessionId: string, text: string): Promise<void> {
   await rpc(baseUrl, 'session.prompt', {
     sessionId,
