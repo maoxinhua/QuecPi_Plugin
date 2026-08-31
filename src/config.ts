@@ -50,6 +50,11 @@ export class Cfg {
     return vscode.workspace.getConfiguration('quecpi.serial').get<number>('baud', 115200);
   }
 
+  /** adb binary path — defaults to 'adb' on PATH; can point to a Windows adb.exe. */
+  static adbPath(): string {
+    return vscode.workspace.getConfiguration('quecpi.adb').get<string>('path', 'adb');
+  }
+
   static chatBaseUrl(): string {
     return vscode.workspace.getConfiguration('quecpi.chat').get<string>('baseUrl', 'https://api.deepseek.com');
   }

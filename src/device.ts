@@ -12,11 +12,11 @@ import { runFlash } from './flash';
 
 /** Run `adb shell <cmd>` on host, stream output to the channel. */
 export async function adbCmd(channel: vscode.OutputChannel, subCmd: string): Promise<void> {
-  if (!(await ensureTool('adb', 'adb', 'sudo apt-get install -y adb'))) return;
+  if (!(await ensureTool(Cfg.adbPath(), 'adb', 'sudo apt-get install -y adb'))) return;
   channel.show(true);
   channel.appendLine(`\n$ adb shell ${subCmd}\n`);
   return new Promise((resolve) => {
-    const proc = spawn('adb', ['shell', ...subCmd.split(' ')], { cwd: Cfg.bspPath() || undefined });
+    const proc = spawn(Cfg.adbPath(), ['shell', ...subCmd.split(' ')], { cwd: Cfg.bspPath() || undefined });
     const onData = (d: Buffer) => channel.append(d.toString());
     proc.stdout.on('data', onData);
     proc.stderr.on('data', onData);
@@ -33,30 +33,30 @@ export async function adbCmd(channel: vscode.OutputChannel, subCmd: string): Pro
 
 /** Open an interactive `adb shell` in a shared terminal. */
 export async function adbShell(): Promise<void> {
-  if (!(await ensureTool('adb', 'adb', 'sudo apt-get install -y adb'))) return;
+  if (!(await ensureTool(Cfg.adbPath(), 'adb', 'sudo apt-get install -y adb'))) return;
   const term = getSharedTerminal('QuecPi ADB');
   term.show();
-  term.sendText('adb shell');
+  term.sendText(`${Cfg.adbPath()} shell`);
 }
 
 /** Open a shared terminal running `adb shell <cmd>` (follow/interactive). */
 export async function adbTerm(cmd: string): Promise<void> {
-  if (!(await ensureTool('adb', 'adb', 'sudo apt-get install -y adb'))) return;
+  if (!(await ensureTool(Cfg.adbPath(), 'adb', 'sudo apt-get install -y adb'))) return;
   const term = getSharedTerminal('QuecPi ADB');
   term.show();
-  term.sendText(`adb shell ${cmd}`);
+  term.sendText(`${Cfg.adbPath()} shell ${cmd}`);
 }
 
 /** Reboot the device (or into EDL). */
 export async function rebootDevice(edl = false): Promise<void> {
-  if (!(await ensureTool('adb', 'adb', 'sudo apt-get install -y adb'))) return;
+  if (!(await ensureTool(Cfg.adbPath(), 'adb', 'sudo apt-get install -y adb'))) return;
   const action = edl ? 'reboot into EDL mode' : 'reboot device';
   const confirm = await vscode.window.showWarningMessage(`Confirm ${action}?`, { modal: true }, 'Confirm');
   if (confirm !== 'Confirm') return;
   const cmd = edl ? 'reboot edl' : 'reboot';
   const term = getSharedTerminal('QuecPi ADB');
   term.show();
-  term.sendText(`adb shell ${cmd}`);
+  term.sendText(`${Cfg.adbPath()} shell ${cmd}`);
 }
 
 /** Send an AT command via serial port (input dialog, optional pre-fill). */
@@ -77,12 +77,12 @@ export async function atSend(channel: vscode.OutputChannel, preFill?: string): P
 
 /** Screenshot: adb screencap + pull + open. */
 export async function screenshot(channel: vscode.OutputChannel): Promise<void> {
-  if (!(await ensureTool('adb', 'adb', 'sudo apt-get install -y adb'))) return;
+  if (!(await ensureTool(Cfg.adbPath(), 'adb', 'sudo apt-get install -y adb'))) return;
   channel.show(true);
   channel.appendLine('\n[screenshot] adb screencap -> pull -> open\n');
   const localPath = `/tmp/quecpi-screen-$(date +%s).png`;
   const proc = spawn('bash', ['-lc',
-    `adb shell screencap -p /sdcard/screen.png && adb pull /sdcard/screen.png ${localPath} && echo "PULLED:${localPath}"`],
+    `${Cfg.adbPath()} shell screencap -p /sdcard/screen.png && ${Cfg.adbPath()} pull /sdcard/screen.png ${localPath} && echo "PULLED:${localPath}"`],
     { cwd: Cfg.bspPath() || undefined });
   const onData = (d: Buffer) => channel.append(d.toString());
   proc.stdout.on('data', onData);

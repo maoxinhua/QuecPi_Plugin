@@ -298,6 +298,11 @@
           "type": "string",
           "default": "You are QuecPi Bot, an embedded Linux / Yocto / Qualcomm BSP expert embedded in VS Code for the QuecPi H1 (QCM6490) board. Answer concisely and cite the file paths you rely on.",
           "description": "Legacy custom system prompt (only used when no preset matches)."
+        },
+        "quecpi.adb.path": {
+          "type": "string",
+          "default": "adb",
+          "description": "adb binary path. Default 'adb' (PATH). Set to a Windows adb.exe (e.g. /mnt/d/.../platform-tools/adb.exe) to talk to the board via the Windows USB stack."
         }
       }
     }
