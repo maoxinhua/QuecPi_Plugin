@@ -231,8 +231,8 @@
         },
         "quecpi.build.custName": {
           "type": "string",
-          "default": "STD",
-          "description": "CustName passed to buildconfig (STD / DBG / SEC / STD/SEC ...)."
+          "default": "DEBIAN",
+          "description": "Custom token: STD/DBG/SEC/WESTON/UBUNTU/DEBIAN (DEBIAN = prebuilt Debian GNOME rootfs)"
         },
         "quecpi.build.threads": {
           "type": "number",
