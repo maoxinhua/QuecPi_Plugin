@@ -9,10 +9,10 @@ import { Cfg } from './config';
  * buildpackage output via a QDL/firehose tool. Runs on the HOST (the board's
  * USB belongs to the host/WSL), not inside the build container.
  */
-export async function runFlash(channel: vscode.OutputChannel): Promise<void> {
+export async function runFlash(channel: vscode.OutputChannel, storage?: 'ufs' | 'emmc'): Promise<void> {
   channel.clear();
   channel.show(true);
-  channel.appendLine('🔥 QuecPi 烧录 (QDL / firehose)');
+  channel.appendLine(`🔥 QuecPi 烧录 (QDL / firehose)${storage ? ` — storage: ${storage.toUpperCase()}` : ''}`);
   channel.appendLine('='.repeat(60));
 
   // 1. flash package (from buildpackage)
@@ -72,7 +72,12 @@ export async function runFlash(channel: vscode.OutputChannel): Promise<void> {
   }
 
   // 5. run qdl
-  const args = ['-f', firehose, ...raws.map((f) => path.join(pkg, f)), ...patches.map((f) => path.join(pkg, f))];
+  const args = [
+    ...(storage ? ['--storage', storage] : []),
+    '-f', firehose,
+    ...raws.map((f) => path.join(pkg, f)),
+    ...patches.map((f) => path.join(pkg, f)),
+  ];
   channel.appendLine(`\n$ ${qdl} ${args.join(' ')}\n`);
   // qdl needs libusb; a local copy may sit next to it in <qdl dir>/lib
   const qdlDir = path.dirname(qdl);

@@ -94,6 +94,8 @@ h1 .logo{color:var(--vscode-textLink-foreground);}
 .tile .ic{font-size:15px;line-height:1;color:var(--vscode-textLink-foreground);}
 .tile .lb{font-weight:600;font-size:9.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tile.warn .lb{color:var(--vscode-errorForeground);}
+.sc.soon,.tile.soon{opacity:.45;cursor:not-allowed;}
+.sc.soon:hover,.tile.soon:hover{background:var(--vscode-sideBar-background);border-color:var(--vscode-panel-border);transform:none;}
 .cg{grid-column:1/-1;background:var(--vscode-editor-background);border:1px solid var(--vscode-panel-border);border-radius:6px;overflow:hidden;}
 .cg-h{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:background .12s;}
 .cg-h:hover{background:var(--vscode-list-hoverBackground);}
@@ -183,7 +185,7 @@ h1 .logo{color:var(--vscode-textLink-foreground);}
     <div class="cg" id="cg-audio">
       <div class="cg-h"><span class="ic codicon codicon-megaphone"></span><span class="lb">${t('dbg.audio')}</span><span class="hint">log / agmplay / mix</span><span class="arrow codicon codicon-chevron-down"></span></div>
       <div class="cg-b">
-        <div class="sub" data-cmd="quecpi.adbCmd" data-args="quectel_build/tools/collect_audio_logs.sh" title="Collect audio logs"><div class="sl">${t('dbg.collect')}</div></div>
+        <div class="sub soon" title="Not in the official SDK (quectel_build/tools/collect_audio_logs.sh missing)"><div class="sl">${t('dbg.collect')}</div></div>
         <div class="sub" data-cmd="quecpi.adbCmd" data-args="agmplay --speaker /tmp/test.wav" title="agmplay speaker"><div class="sl">${t('dbg.speaker')}</div></div>
         <div class="sub" data-cmd="quecpi.adbCmd" data-args="agmplay --hdmi /tmp/test.wav" title="agmplay HDMI"><div class="sl">${t('dbg.hdmi')}</div></div>
         <div class="sub" data-cmd="quecpi.adbCmd" data-args="agmplay --dp /tmp/test.wav" title="agmplay DP"><div class="sl">${t('dbg.dp')}</div></div>
@@ -195,10 +197,10 @@ h1 .logo{color:var(--vscode-textLink-foreground);}
       <div class="cg-b">
         <div class="sub" data-cmd="quecpi.screenshot" title="screencap + pull"><div class="sl">${t('dbg.screenshot')}</div></div>
         <div class="sub" data-cmd="quecpi.adbCmd" data-args="dumpsys SurfaceFlinger | grep -i fps" title="Check FPS"><div class="sl">${t('dbg.fps')}</div></div>
-        <div class="sub" data-cmd="quecpi.adbCmd" data-args="quectel_build/tools/gpu_stress.sh" title="GPU stress"><div class="sl">${t('dbg.gpuStress')}</div></div>
-        <div class="sub" data-cmd="quecpi.adbTerm" data-args="quectel_build/tools/gpu_monitor.sh 60" title="GPU monitor 60s"><div class="sl">${t('dbg.gpuMon')}</div></div>
-        <div class="sub" data-cmd="quecpi.adbCmd" data-args="quectel_build/tools/smart_adb_qxdm_log --start --mask full-filter-audio.cfg" title="Start diag"><div class="sl">${t('dbg.diagStart')}</div></div>
-        <div class="sub" data-cmd="quecpi.adbCmd" data-args="quectel_build/tools/smart_adb_qxdm_log --stop" title="Stop diag"><div class="sl">${t('dbg.diagStop')}</div></div>
+        <div class="sub soon" title="Not in the official SDK (quectel_build/tools/gpu_stress.sh missing)"><div class="sl">${t('dbg.gpuStress')}</div></div>
+        <div class="sub soon" title="Not in the official SDK (quectel_build/tools/gpu_monitor.sh missing)"><div class="sl">${t('dbg.gpuMon')}</div></div>
+        <div class="sub soon" title="Not in the official SDK (smart_adb_qxdm_log missing)"><div class="sl">${t('dbg.diagStart')}</div></div>
+        <div class="sub soon" title="Not in the official SDK (smart_adb_qxdm_log missing)"><div class="sl">${t('dbg.diagStop')}</div></div>
       </div>
     </div>
   </div>

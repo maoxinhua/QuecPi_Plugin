@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { Cfg } from './config';
 import { getSharedTerminal, ensureTool } from './terminal';
+import { runFlash } from './flash';
 
 /**
  * Host-side device debug commands (adb-based). The board connects via USB to
@@ -95,27 +96,7 @@ export async function screenshot(channel: vscode.OutputChannel): Promise<void> {
   });
 }
 
-/** Flash via the BSP's flash.sh (UFS or eMMC). */
+/** Flash via the official QDL path (qdl + firehose + rawprogram/patch). */
 export async function flashStorage(channel: vscode.OutputChannel, storage: 'ufs' | 'emmc'): Promise<void> {
-  const bsp = Cfg.bspPath();
-  const flashScript = `${bsp}/quectel_build/tools/flash.sh`;
-  const confirm = await vscode.window.showWarningMessage(
-    `Confirm one-click flash ${storage.toUpperCase()}? This overwrites the board!`, { modal: true }, 'Confirm Flash');
-  if (confirm !== 'Confirm Flash') return;
-  channel.show(true);
-  channel.appendLine(`\n$ ${flashScript} ${storage}\n`);
-  return new Promise((resolve) => {
-    const proc = spawn('bash', ['-lc', `cd ${bsp} && ./quectel_build/tools/flash.sh ${storage}`]);
-    const onData = (d: Buffer) => channel.append(d.toString());
-    proc.stdout.on('data', onData);
-    proc.stderr.on('data', onData);
-    proc.on('error', (e) => {
-      channel.appendLine(`\n[error] ${e.message}`);
-      resolve();
-    });
-    proc.on('close', (code) => {
-      channel.appendLine(`\n[exit ${code}]`);
-      resolve();
-    });
-  });
+  return runFlash(channel, storage);
 }
