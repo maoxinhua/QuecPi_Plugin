@@ -74,7 +74,13 @@ export async function runFlash(channel: vscode.OutputChannel): Promise<void> {
   // 5. run qdl
   const args = ['-f', firehose, ...raws.map((f) => path.join(pkg, f)), ...patches.map((f) => path.join(pkg, f))];
   channel.appendLine(`\n$ ${qdl} ${args.join(' ')}\n`);
-  await runHost(qdl, args, channel);
+  // qdl needs libusb; a local copy may sit next to it in <qdl dir>/lib
+  const qdlDir = path.dirname(qdl);
+  const env = {
+    ...process.env,
+    LD_LIBRARY_PATH: `${path.join(qdlDir, 'lib')}${process.env.LD_LIBRARY_PATH ? ':' + process.env.LD_LIBRARY_PATH : ''}`,
+  };
+  await runHost(qdl, args, channel, env);
   channel.appendLine('\n[烧录完成] 若最后显示 SUCCESS / FINISHED 即为成功，可断电重启板子。');
 }
 
@@ -123,9 +129,9 @@ function runQuiet(cmd: string, args: string[]): Promise<string> {
   });
 }
 
-function runHost(cmd: string, args: string[], channel: vscode.OutputChannel): Promise<number> {
+function runHost(cmd: string, args: string[], channel: vscode.OutputChannel, env?: NodeJS.ProcessEnv): Promise<number> {
   return new Promise((resolve) => {
-    const proc = spawn(cmd, args);
+    const proc = spawn(cmd, args, { env: env ?? process.env });
     const onData = (d: Buffer) => channel.append(d.toString());
     proc.stdout.on('data', onData);
     proc.stderr.on('data', onData);
