@@ -226,7 +226,7 @@
         },
         "quecpi.build.projectRev": {
           "type": "string",
-          "default": "SG565DWFPARL1A02_BL01BP01K0M02V01_QDP_LP6.6.052.01.003V07",
+          "default": "QSM565DWFPARL1A01_BP01.001_Linux6.6.38_V01",
           "description": "ProjectRev passed to buildconfig."
         },
         "quecpi.build.custName": {
@@ -303,6 +303,11 @@
           "type": "string",
           "default": "adb",
           "description": "adb binary path. Default 'adb' (PATH). Set to a Windows adb.exe (e.g. /mnt/d/.../platform-tools/adb.exe) to talk to the board via the Windows USB stack."
+        },
+        "quecpi.build.debugBuild": {
+          "type": "boolean",
+          "default": true,
+          "description": "DEBUG build (DEBUG_BUILD=1). The H1 board runs a -debug kernel, so this is on by default."
         }
       }
     }

@@ -93,8 +93,9 @@ const threadConf =
   ` && printf 'PARALLEL_MAKE:pn-rust-llvm-native = "-j %d"\\nPARALLEL_MAKE:pn-llvm-native = "-j %d"\\nPARALLEL_MAKE:pn-llvm = "-j %d"\\nPARALLEL_MAKE:pn-glslang = "-j %d"\\nPARALLEL_MAKE:pn-spirv-tools = "-j %d"\\n' ${Cfg.llvmJobs()} ${Cfg.llvmJobs()} ${Cfg.llvmJobs()} ${Cfg.llvmJobs()} ${Cfg.llvmJobs()} >> /work/build-qcom-wayland/conf/local.conf`;
 
 export function buildconfigSnippet(): string {
-  const rev = Cfg.projectRev() || 'SG565DWFPARL1A02_BL01BP01K0M02V01_QDP_LP6.6.052.01.003V07';
-  return `${envSetup} && buildconfig ${Cfg.projectName()} ${rev} ${Cfg.custName()}`;
+  const rev = Cfg.projectRev() || 'QSM565DWFPARL1A01_BP01.001_Linux6.6.38_V01';
+  const debug = Cfg.debugBuild() ? ' DEBUG' : '';
+  return `${envSetup} && buildconfig ${Cfg.projectName()} ${rev} ${Cfg.custName()}${debug}`;
 }
 
 export function buildallSnippet(): string {

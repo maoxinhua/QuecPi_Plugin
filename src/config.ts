@@ -30,6 +30,11 @@ export class Cfg {
     return vscode.workspace.getConfiguration('quecpi.build').get<string>('custName', 'STD');
   }
 
+  /** DEBUG build (DEBUG_BUILD=1) — the H1 board runs a -debug kernel. */
+  static debugBuild(): boolean {
+    return vscode.workspace.getConfiguration('quecpi.build').get<boolean>('debugBuild', true);
+  }
+
   static projectName(): string {
     return 'QSM565DWF';
   }
