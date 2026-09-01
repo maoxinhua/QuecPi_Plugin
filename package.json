@@ -34,32 +34,32 @@
       },
       {
         "command": "quecpi.buildall",
-        "title": "QuecPi: Build All (buildall)",
+        "title": "QuecPi: Build All (incremental)",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.buildClean",
-        "title": "QuecPi: Clean Build (从头重建)",
+        "title": "QuecPi: Clean Build (full rebuild)",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.buildkernel",
-        "title": "QuecPi: Build Kernel (buildkernel)",
+        "title": "QuecPi: Build Kernel",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.builddtb",
-        "title": "QuecPi: Build DTB (builddtb)",
+        "title": "QuecPi: Build DTB",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.buildpackage",
-        "title": "QuecPi: Package Images (buildpackage)",
+        "title": "QuecPi: Package Images",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.rebake",
-        "title": "QuecPi: Rebuild Recipe (rebake)",
+        "title": "QuecPi: Rebuild Recipe",
         "category": "QuecPi"
       },
       {
@@ -69,17 +69,17 @@
       },
       {
         "command": "quecpi.openBitbakeLog",
-        "title": "QuecPi: Open Bitbake Log (pick recipe)",
+        "title": "QuecPi: Open Bitbake Log",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.flash",
-        "title": "QuecPi: 烧录到板 (Flash)",
+        "title": "QuecPi: Flash to Board (QDL)",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.adbCmd",
-        "title": "QuecPi: ADB 命令",
+        "title": "QuecPi: ADB Command",
         "category": "QuecPi"
       },
       {
@@ -89,42 +89,42 @@
       },
       {
         "command": "quecpi.adbTerm",
-        "title": "QuecPi: ADB 终端",
+        "title": "QuecPi: ADB Terminal",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.reboot",
-        "title": "QuecPi: 重启设备",
+        "title": "QuecPi: Reboot Device",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.rebootEdl",
-        "title": "QuecPi: 进 EDL 模式",
+        "title": "QuecPi: Enter EDL Mode",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.copilot",
-        "title": "QuecPi: 打开 Copilot Chat",
+        "title": "QuecPi: Open Copilot Chat",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.atSend",
-        "title": "QuecPi: AT 指令发送",
+        "title": "QuecPi: Send AT Command",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.screenshot",
-        "title": "QuecPi: 截图",
+        "title": "QuecPi: Screenshot",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.flashUfs",
-        "title": "QuecPi: 一键烧录 UFS",
+        "title": "QuecPi: Flash UFS",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.flashEmmc",
-        "title": "QuecPi: 一键烧录 eMMC",
+        "title": "QuecPi: Flash eMMC",
         "category": "QuecPi"
       },
       {
@@ -134,17 +134,17 @@
       },
       {
         "command": "quecpi.flashHelp",
-        "title": "QuecPi: Flash / QDL Help",
+        "title": "QuecPi: Flash Help",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.chat",
-        "title": "QuecPi: AI Chat (CodeBuddy)",
+        "title": "QuecPi: AI Chat",
         "category": "QuecPi"
       },
       {
         "command": "quecpi.newPreset",
-        "title": "QuecPi: 创建 Agent 预设 (复制)",
+        "title": "QuecPi: Create Agent Preset (copy)",
         "category": "QuecPi"
       },
       {
