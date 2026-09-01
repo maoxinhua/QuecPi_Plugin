@@ -43,8 +43,18 @@ export async function runBspShell(
     const proc = spawn(cmd, args, { cwd: opts.cwd ?? bsp });
     // cancellation support (Uniknect-style withProgress + token)
     const cancelSub = opts.token?.onCancellationRequested(() => {
-      channel.appendLine('\n[quecpi] cancelled by user — killing process tree...');
+      channel.appendLine('\n[quecpi] cancelled by user — killing build...');
       try { proc.kill('SIGKILL'); } catch { /* ignore */ }
+      // Kill the actual bitbake too: killing the docker exec client above
+      // leaves the bitbake-server orphaned and still running inside the
+      // container (or on the host in local mode).
+      const killArgs = mode === 'docker'
+        ? ['exec', Cfg.container(), 'pkill', '-9', '-f', 'bitbake']
+        : [];
+      const killer = mode === 'docker'
+        ? spawn('docker', killArgs)
+        : spawn('pkill', ['-9', '-f', 'bitbake']);
+      killer.on('error', () => { /* ignore */ });
     });
     let output = '';
     const onData = (d: Buffer) => {
@@ -99,7 +109,11 @@ export function buildconfigSnippet(): string {
 }
 
 export function buildallSnippet(): string {
-  return `${envSetup} && ${threadConf} && buildall`;
+  // INCREMENTAL build: reuse sstate, only rebuild changed parts.
+  // NOTE: the SDK's buildall() does `bitbake -c cleanall` first, which forces
+  // a full image rebuild every time — so we call bitbake directly here.
+  // A full rebuild happens only via Clean Build (cleanBuildSnippet).
+  return `${envSetup} && ${threadConf} && bitbake $TARGET_IMAGE`;
 }
 
 /**
