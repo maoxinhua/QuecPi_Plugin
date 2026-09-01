@@ -32,13 +32,13 @@ export class ManageResourcesProvider implements vscode.TreeDataProvider<vscode.T
 /** Register the Manage Resources commands. Returns the disposables. */
 export function registerManageCommands(): vscode.Disposable[] {
   return [
-    // Manage Toolchains → Quectel-Pi GitHub (SDK / kernel / tool repos)
+    // Manage Toolchains → official dev-tools download page
     vscode.commands.registerCommand('quecpi.manageToolchains', () => {
-      void vscode.env.openExternal(vscode.Uri.parse('https://github.com/Quectel-Pi'));
-    }),
-    // Manage SDKs → official SDK / firmware download page
-    vscode.commands.registerCommand('quecpi.manageSdks', () => {
       void vscode.env.openExternal(vscode.Uri.parse('https://developer.quectel.com/resource-download?pid=308'));
+    }),
+    // Manage SDKs → Quectel-Pi GitHub (SDK / kernel / tool repos)
+    vscode.commands.registerCommand('quecpi.manageSdks', () => {
+      void vscode.env.openExternal(vscode.Uri.parse('https://github.com/Quectel-Pi'));
     }),
     vscode.commands.registerCommand('quecpi.openApp', async () => {
       const r = await vscode.window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, openLabel: 'Open Application' });
