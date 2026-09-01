@@ -146,6 +146,41 @@
         "command": "quecpi.newPreset",
         "title": "QuecPi: 创建 Agent 预设 (复制)",
         "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.manageToolchains",
+        "title": "QuecPi: Manage Toolchains",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.manageSdks",
+        "title": "QuecPi: Manage SDKs",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.openApp",
+        "title": "QuecPi: Open an existing application",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.newApp",
+        "title": "QuecPi: Create a new application",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.newBoard",
+        "title": "QuecPi: Create a new board",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.browseSamples",
+        "title": "QuecPi: Browse Samples",
+        "category": "QuecPi"
+      },
+      {
+        "command": "quecpi.openTerminal",
+        "title": "QuecPi: Open terminal",
+        "category": "QuecPi"
       }
     ],
     "viewsContainers": {
@@ -157,8 +192,8 @@
         },
         {
           "id": "quecpiSidebar",
-          "title": "QuecPi Panel",
-          "icon": "$(dashboard)"
+          "title": "Manage Resources",
+          "icon": "$(home)"
         }
       ]
     },
@@ -170,16 +205,16 @@
           "icon": "$(package)"
         },
         {
-          "id": "quecpiBuildTasks",
-          "name": "Quick Build",
-          "icon": "$(tools)"
+          "id": "quecpiPanel",
+          "name": "QuecPi H1 Panel",
+          "type": "webview"
         }
       ],
       "quecpiSidebar": [
         {
-          "id": "quecpiSidebarView",
-          "name": "Control Panel",
-          "type": "webview"
+          "id": "quecpiManageResources",
+          "name": "Manage Resources",
+          "icon": "$(home)"
         }
       ]
     },
@@ -187,17 +222,17 @@
       "view/title": [
         {
           "command": "quecpi.panel",
-          "when": "view == quecpiBuildTasks",
+          "when": "view == quecpiManageResources",
           "group": "navigation"
         },
         {
           "command": "quecpi.buildall",
-          "when": "view == quecpiBuildTasks",
+          "when": "view == quecpiArtifacts",
           "group": "navigation"
         },
         {
           "command": "quecpi.chat",
-          "when": "view == quecpiBuildTasks",
+          "when": "view == quecpiArtifacts",
           "group": "navigation"
         }
       ]
