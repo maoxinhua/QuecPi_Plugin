@@ -189,28 +189,21 @@
           "id": "quecpi",
           "title": "QuecPi",
           "icon": "$(chip)"
-        },
-        {
-          "id": "quecpiSidebar",
-          "title": "Manage Resources",
-          "icon": "$(home)"
         }
       ]
     },
     "views": {
       "quecpi": [
         {
+          "id": "quecpiPanel",
+          "name": "QuecPi H1 Panel",
+          "type": "webview"
+        },
+        {
           "id": "quecpiArtifacts",
           "name": "Build Artifacts",
           "icon": "$(package)"
         },
-        {
-          "id": "quecpiPanel",
-          "name": "QuecPi H1 Panel",
-          "type": "webview"
-        }
-      ],
-      "quecpiSidebar": [
         {
           "id": "quecpiManageResources",
           "name": "Manage Resources",

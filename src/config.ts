@@ -2,6 +2,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+/** True when running in Windows VS Code (vs WSL/Linux). */
+export const isWindows: boolean = process.platform === 'win32';
+
 /**
  * Central settings access + a few filesystem helpers for the QuecPi BSP.
  */
